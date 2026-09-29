@@ -256,7 +256,7 @@ class WarmUp {
 				Payload: warmerConfig.payload,
 			};
 
-			await this.provider.request('Lambda', 'invoke', params);
+			await this.invokeLambda(params);
 			this.log.notice(`WarmUp: Warmer "${warmerName}" successfully prewarmed your functions.`);
 		} catch (err) {
 			this.log.error(
@@ -264,6 +264,46 @@ class WarmUp {
 				err,
 			);
 		}
+	}
+
+	/**
+	 * Invoke a Lambda function through the framework's AWS credentials.
+	 *
+	 * osls 4 removed the SDK v2 `provider.request()` proxy and exposes
+	 * `provider.getAwsSdkV3Config()` instead, so plugins build their own SDK v3 clients.
+	 * Serverless Framework 3 and osls 3 only offer `provider.request()`.
+	 *
+	 * @param {Object} params - Lambda invoke parameters
+	 * @returns {Promise<Object>} The invocation response
+	 */
+	async invokeLambda(params) {
+		if (typeof this.provider.getAwsSdkV3Config !== 'function') {
+			return this.provider.request('Lambda', 'invoke', params);
+		}
+
+		const { InvokeCommand } = require('@aws-sdk/client-lambda');
+		const client = await this.getLambdaClient();
+		return client.send(
+			new InvokeCommand({
+				...params,
+				Payload: typeof params.Payload === 'string' ? Buffer.from(params.Payload) : params.Payload,
+			}),
+		);
+	}
+
+	/**
+	 * Lazily build one Lambda client with the framework-resolved region, credentials and retries.
+	 *
+	 * @returns {Promise<LambdaClient>} The shared client
+	 */
+	async getLambdaClient() {
+		if (!this.lambdaClientPromise) {
+			const { LambdaClient } = require('@aws-sdk/client-lambda');
+			this.lambdaClientPromise = this.provider
+				.getAwsSdkV3Config()
+				.then((config) => new LambdaClient(config));
+		}
+		return this.lambdaClientPromise;
 	}
 }
 
