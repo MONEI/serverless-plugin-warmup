@@ -15,7 +15,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/juanjoDiaz/serverless-plugin-warmup.git"
+		"url": "git+https://github.com/MONEI/serverless-plugin-warmup.git"
 	},
 	"keywords": [
 		"serverless plugin warm up lambdas",
@@ -27,9 +27,9 @@
 		"lambda cold"
 	],
 	"bugs": {
-		"url": "https://github.com/juanjoDiaz/serverless-plugin-warmup/issues"
+		"url": "https://github.com/MONEI/serverless-plugin-warmup/issues"
 	},
-	"homepage": "https://github.com/juanjoDiaz/serverless-plugin-warmup",
+	"homepage": "https://github.com/MONEI/serverless-plugin-warmup",
 	"devDependencies": {
 		"@biomejs/biome": "2.3.11",
 		"husky": "^9.1.7",
