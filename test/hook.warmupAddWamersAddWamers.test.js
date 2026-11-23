@@ -1594,6 +1594,60 @@ describe('Serverless warmup plugin warmup:warmers:addWarmers:addWarmers hook', (
 		expect(exec).not.toHaveBeenCalled();
 	});
 
+	it('Should run the warmer on the provider Node runtime', async () => {
+		const serverless = getServerlessConfig({
+			service: {
+				provider: {
+					runtime: 'nodejs26.x',
+				},
+				custom: {
+					warmup: {
+						default: {
+							enabled: true,
+						},
+					},
+				},
+				functions: { someFunc1: { name: 'someFunc1' }, someFunc2: { name: 'someFunc2' } },
+			},
+		});
+		const pluginUtils = getPluginUtils();
+		const plugin = new WarmUp(serverless, {}, pluginUtils);
+
+		await plugin.hooks['before:warmup:addWarmers:addWarmers']();
+		await plugin.hooks['warmup:addWarmers:addWarmers']();
+
+		expect(plugin.serverless.service.functions.warmUpPluginDefault).toEqual(
+			getExpectedFunctionConfig({ runtime: 'nodejs26.x' }),
+		);
+	});
+
+	it('Should keep the warmer on Node when the provider runtime is not Node', async () => {
+		const serverless = getServerlessConfig({
+			service: {
+				provider: {
+					runtime: 'python3.13',
+				},
+				custom: {
+					warmup: {
+						default: {
+							enabled: true,
+						},
+					},
+				},
+				functions: { someFunc1: { name: 'someFunc1' }, someFunc2: { name: 'someFunc2' } },
+			},
+		});
+		const pluginUtils = getPluginUtils();
+		const plugin = new WarmUp(serverless, {}, pluginUtils);
+
+		await plugin.hooks['before:warmup:addWarmers:addWarmers']();
+		await plugin.hooks['warmup:addWarmers:addWarmers']();
+
+		expect(plugin.serverless.service.functions.warmUpPluginDefault).toEqual(
+			getExpectedFunctionConfig({ runtime: 'nodejs24.x' }),
+		);
+	});
+
 	it('Should use the memory size from options if present', async () => {
 		const serverless = getServerlessConfig({
 			service: {
